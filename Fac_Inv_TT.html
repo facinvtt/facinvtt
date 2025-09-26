@@ -1,0 +1,859 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Faculty Timetable Dashboard</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 25px;
+            background: linear-gradient(135deg, #1a73e8, #6c8ef5);
+            color: white;
+            border-radius: 10px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            margin-bottom: 10px;
+        }
+
+        .subtitle {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .dashboard {
+            display: grid;
+            grid-template-columns: 320px 1fr;
+            gap: 25px;
+        }
+
+        .faculty-list {
+            background: white;
+            border-radius: 10px;
+            padding: 20px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .faculty-list h2 {
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #1a73e8;
+            color: #1a73e8;
+        }
+
+        .faculty-item {
+            padding: 12px 15px;
+            margin-bottom: 8px;
+            background: #f8f9fa;
+            border-radius: 8px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border-left: 4px solid transparent;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .faculty-item:hover {
+            background: #e8f0fe;
+            border-left-color: #1a73e8;
+            transform: translateX(5px);
+        }
+
+        .faculty-item.active {
+            background: #e8f0fe;
+            border-left-color: #1a73e8;
+            font-weight: 600;
+        }
+
+        .workload-badge {
+            background: #1a73e8;
+            color: white;
+            padding: 3px 8px;
+            border-radius: 12px;
+            font-size: 0.8rem;
+        }
+
+        .timetable-display {
+            background: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+            max-height: 80vh;
+            overflow-y: auto;
+        }
+
+        .timetable-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            padding-bottom: 15px;
+            border-bottom: 2px solid #eaeaea;
+        }
+
+        .faculty-name {
+            font-size: 1.8rem;
+            color: #1a73e8;
+        }
+
+        .time-display {
+            background: #f0f7ff;
+            padding: 10px 15px;
+            border-radius: 8px;
+            font-weight: 600;
+            color: #1a73e8;
+            border: 1px solid #d0e3ff;
+        }
+
+        .faculty-details {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 25px;
+        }
+
+        .detail-card {
+            background: #f8f9fa;
+            padding: 15px;
+            border-radius: 8px;
+            text-align: center;
+            transition: transform 0.3s ease;
+        }
+
+        .detail-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .detail-label {
+            font-size: 0.9rem;
+            color: #666;
+            margin-bottom: 5px;
+        }
+
+        .detail-value {
+            font-size: 1.2rem;
+            font-weight: 600;
+            color: #333;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+            box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+        }
+
+        th, td {
+            padding: 14px 12px;
+            text-align: center;
+            border: 1px solid #e0e0e0;
+        }
+
+        th {
+            background-color: #1a73e8;
+            color: white;
+            font-weight: 600;
+            position: sticky;
+            top: 0;
+        }
+
+        tr:nth-child(even) {
+            background-color: #f8f9fa;
+        }
+
+        tr:hover {
+            background-color: #e8f0fe;
+        }
+
+        .time-slot {
+            font-weight: 600;
+            color: #1a73e8;
+            background-color: #f0f7ff !important;
+        }
+
+        .class-cell {
+            background-color: #e8f5e9;
+            font-weight: 500;
+            border-left: 3px solid #4caf50;
+        }
+
+        .lab-cell {
+            background-color: #e3f2fd;
+            font-weight: 500;
+            border-left: 3px solid #2196f3;
+        }
+
+        .lunch-cell {
+            background-color: #fff3e0;
+            font-weight: 500;
+            font-style: italic;
+            border-left: 3px solid #ff9800;
+        }
+
+        .empty-cell {
+            background-color: #fafafa;
+            color: #999;
+        }
+
+        .no-timetable {
+            text-align: center;
+            padding: 40px;
+            color: #666;
+            font-style: italic;
+        }
+
+        .legend {
+            display: flex;
+            justify-content: center;
+            gap: 20px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+
+        .legend-item {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.9rem;
+        }
+
+        .legend-color {
+            width: 15px;
+            height: 15px;
+            border-radius: 3px;
+        }
+
+        @media (max-width: 1024px) {
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+
+            .faculty-list {
+                max-height: 200px;
+            }
+        }
+
+        @media (max-width: 768px) {
+            .faculty-details {
+                grid-template-columns: 1fr;
+            }
+
+            table {
+                font-size: 0.9rem;
+            }
+
+            th, td {
+                padding: 10px 8px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Faculty Timetable Dashboard</h1>
+            <p class="subtitle">Computer Science and Engineering Department - Academic Year 2025-26</p>
+        </header>
+
+        <div class="dashboard">
+            <div class="faculty-list">
+                <h2>Faculty Members</h2>
+                <div id="facultyNames"></div>
+            </div>
+
+            <div class="timetable-display">
+                <div class="timetable-header">
+                    <h2 class="faculty-name" id="selectedFaculty">Select a Faculty Member</h2>
+                    <div class="time-display" id="currentTime">Loading time...</div>
+                </div>
+
+                <div class="faculty-details" id="facultyDetails">
+                    <div class="detail-card">
+                        <div class="detail-label">Weekly Workload</div>
+                        <div class="detail-value" id="workloadValue">-</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Year & Semester</div>
+                        <div class="detail-value" id="yearSemValue">-</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Section</div>
+                        <div class="detail-value" id="sectionValue">-</div>
+                    </div>
+                    <div class="detail-card">
+                        <div class="detail-label">Current Day</div>
+                        <div class="detail-value" id="currentDay">-</div>
+                    </div>
+                </div>
+
+                <div id="timetableContent">
+                    <div class="no-timetable">Please select a faculty member to view their timetable</div>
+                </div>
+
+                <div class="legend">
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e8f5e9;"></div>
+                        <span>Regular Class</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #e3f2fd;"></div>
+                        <span>Lab Session</span>
+                    </div>
+                    <div class="legend-item">
+                        <div class="legend-color" style="background-color: #fff3e0;"></div>
+                        <span>Lunch Break</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Faculty data extracted from the documents
+        const facultyData = [
+            // --- Existing Faculty Data ---
+            {
+                name: "Mrs. S. SOWJANYA",
+                workload: "24 hours/week",
+                yearSem: "III Year B.Tech, I Semester",
+                section: "A, B & C",
+                timetable: {
+                    "MON": ["", "DevOps Lab", "DevOps Lab", "LUNCH", "", "CN Lab", "CN Lab"],
+                    "TUE": ["", "DevOps Lab", "DevOps Lab", "LUNCH", "", "CN Lab", "CN Lab"],
+                    "WED": ["", "Flutter Lab", "Flutter Lab", "LUNCH", "", "MOOCS", ""],
+                    "THU": ["", "DevOps Lab", "DevOps Lab", "LUNCH", "", "Flutter Lab", "Flutter Lab"],
+                    "FRI": ["", "CN Lab", "CN Lab", "LUNCH", "", "Flutter Lab", "Flutter Lab"],
+                    "SAT": ["", "MOOCS", "MOOCS", "LUNCH", "MOOCS", "", ""]
+                }
+            },
+            {
+                name: "Dr.K. BULLIBABU",
+                workload: "13 hours/week",
+                yearSem: "III Year B.Tech, I Semester",
+                section: "B",
+                timetable: {
+                    "MON": ["II CSE-DS LAB", "II CSE-DS LAB", "II CSE-DS LAB", "LUNCH", "", "NLP", ""],
+                    "TUE": ["", "NLP", "", "LUNCH", "", "", ""],
+                    "WED": ["", "SDC", "SDC", "LUNCH", "", "PPS LAB", "PPS LAB"],
+                    "THU": ["", "NLP", "", "LUNCH", "", "PPS LAB", "PPS LAB"],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["NLP", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.MD. ABDUL GAFAR",
+                workload: "9 hours/week + II Year Lab",
+                yearSem: "II Year Diploma (CSE), MBA, I Semester",
+                section: "A",
+                timetable: {
+                    "MON": ["", "DS/DCSE-A", "", "LUNCH", "", "MIS/MBA", ""],
+                    "TUE": ["MIS/MBA", "", "", "LUNCH", "", "", ""],
+                    "WED": ["", "", "MIS/MBA", "LUNCH", "", "DS/DCSE-A", ""],
+                    "THU": ["DS/DCSE-A", "", "", "LUNCH", "", "MIS/MBA", ""],
+                    "FRI": ["DS/DCSE-A", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "DS/DCSE-A", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.B. NAGESWAR RAO",
+                workload: "Not specified",
+                yearSem: "I Year B.Tech, I Semester",
+                section: "A, B & C",
+                timetable: {
+                    "MON": ["", "ECE(CPE LAB)", "ECE(CPE LAB)", "LUNCH", "", "CSE-A(PPS LAB)", "CSE-A(PPS LAB)"],
+                    "TUE": ["", "AI&ML-B(PPS LAB)", "AI&ML-B(PPS LAB)", "LUNCH", "", "AI&ML-B(ITWS LAB)", "AI&ML-B(ITWS LAB)"],
+                    "WED": ["", "", "", "LUNCH", "", "CSE-B(PPS LAB)", "CSE-B(PPS LAB)"],
+                    "THU": ["", "AI&ML-A(PPS LAB)", "AI&ML-A(PPS LAB)", "LUNCH", "", "CSE-C(PPS LAB)", "CSE-C(PPS LAB)"],
+                    "FRI": ["", "IT(PPS LAB)", "IT(PPS LAB)", "LUNCH", "", "AI&ML-A(ITWS LAB)", "AI&ML-A(ITWS LAB)"],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Dr. CH N SANTHOSH KUMAR",
+                workload: "10 hours/week",
+                yearSem: "III-IV Year B.Tech, I Semester",
+                section: "I",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "III-B-PPL", "", ""],
+                    "TUE": ["", "", "", "LUNCH", "", "", ""],
+                    "WED": ["III-B-PPL", "", "III-A-NLP", "LUNCH", "", "", ""],
+                    "THU": ["", "", "", "LUNCH", "III-A-NLP", "", ""],
+                    "FRI": ["III-A-NLP", "IV-B-CD Lab", "IV-B-CD Lab", "LUNCH", "", "III-B-PPL", ""],
+                    "SAT": ["", "III-B-PPL", "", "LUNCH", "III-A-NLP", "", ""]
+                }
+            },
+            {
+                name: "Dr. K. SRINIVASA REDDY",
+                workload: "10 hours/week",
+                yearSem: "IV Year B.Tech, I Semester",
+                section: "A, B",
+                timetable: {
+                    "MON": ["CC-CSE A", "", "", "LUNCH", "", "", ""],
+                    "TUE": ["", "", "CC-CSE A", "LUNCH", "", "CC-CSE B", ""],
+                    "WED": ["", "", "CC-CSE A", "LUNCH", "", "CC-CSE B", ""],
+                    "THU": ["", "", "", "LUNCH", "", "", ""],
+                    "FRI": ["CC-CSE B", "CN LAB-III CSE B", "CN LAB-III CSE B", "LUNCH", "", "", ""],
+                    "SAT": ["CC-CSE B", "", "CC-CSE A", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Dr. K. MANDAKINI",
+                workload: "13 hours/week (8+5)",
+                yearSem: "III Year B.Tech, I Semester",
+                section: "CSE-C",
+                timetable: {
+                    "MON": ["", "PPS CSE-C", "CN", "LUNCH", "", "CN LAB", "CN LAB"],
+                    "TUE": ["", "", "", "LUNCH", "PPS(12.50-1.50PM)", "", ""],
+                    "WED": ["", "", "", "LUNCH", "", "PPS", ""],
+                    "THU": ["", "", "CN", "LUNCH", "", "", ""],
+                    "FRI": ["", "CN LAB (III-I CSE-B)", "CN LAB (III-I CSE-B)", "LUNCH", "PPS(12.50-1.50PM)", "CN", ""],
+                    "SAT": ["CN", "", "", "LUNCH", "PPS(12.50-1.50PM)", "", ""]
+                }
+            },
+            {
+                name: "Dr. T.V. SURESH KUMAR",
+                workload: "6 hours/week (4 Theory + 2 Lab)",
+                yearSem: "III Year B.Tech, I Semester",
+                section: "A",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "CN", "", ""],
+                    "TUE": ["CN", "", "", "LUNCH", "", "CN LAB", "CN LAB"],
+                    "WED": ["", "CN", "", "LUNCH", "", "", ""],
+                    "THU": ["CN", "", "", "LUNCH", "", "", ""],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mrs.D. GANGARANI",
+                workload: "Not specified",
+                yearSem: "B.Tech (CSE)",
+                section: "Not specified",
+                timetable: {
+                    "MON": ["CNS(IV-C)", "", "", "LUNCH", "", "", ""],
+                    "TUE": ["", "CNS Lab(IV-C)", "CNS Lab(IV-C)", "LUNCH", "DAA", "", ""],
+                    "WED": ["", "CD Lab(IV-C)", "CD Lab(IV-C)", "LUNCH", "", "CNS Lab(IV-A)", "CNS Lab(IV-A)"],
+                    "THU": ["DAA", "", "CNS(IV-C)", "LUNCH", "", "", ""],
+                    "FRI": ["", "", "CNS(IV-C)", "LUNCH", "DAA", "SDC LAB(III CSE-A)", "SDC LAB(III CSE-A)"],
+                    "SAT": ["CNS(IV-C)", "", "DAA", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.G.L.N.V. KARTHEEK",
+                workload: "2 hours/week",
+                yearSem: "I Year B.Tech, I Semester",
+                section: "B",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "", "", ""],
+                    "TUE": ["", "", "", "LUNCH", "", "", ""],
+                    "WED": ["", "", "", "LUNCH", "", "PPS Lab", ""],
+                    "THU": ["", "", "", "LUNCH", "", "", ""],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.G. GOPINATH",
+                workload: "40 hours/week",
+                yearSem: "II Year Diploma (CSE), III Semester",
+                section: "A, B",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "", "", ""],
+                    "TUE": ["", "DS LAB(II DIP-A)", "DS LAB(II DIP-A)", "LUNCH", "", "", ""],
+                    "WED": ["", "", "", "LUNCH", "", "DS LAB(II DIP-B)", "DS LAB(II DIP-B)"],
+                    "THU": ["", "", "", "LUNCH", "", "DS LAB(II DIP-A)", "DS LAB(II DIP-A)"],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "DS LAB(II DIP-B)", "DS LAB(II DIP-B)"]
+                }
+            },
+            {
+                // --- Mr. V. KASINADHAM Data (New) ---
+                name: "Mr. V. KASINADHAM",
+                workload: "27 hours/week",
+                yearSem: "IV/II Year B.Tech (CSE), I Semester",
+                section: "A, B, C/C",
+                timetable: {
+                    "MON": ["", "IV CSE – B CNS LAB", "IV CSE – B CNS LAB", "LUNCH", "IV CSE – B PROJECT STAGE – 1", "IV CSE – B PROJECT STAGE – 1", ""],
+                    "TUE": ["", "IV CSE – C CNS LAB", "IV CSE – C CNS LAB", "LUNCH", "IV CSE – C PROJECT STAGE – 1", "IV CSE – C PROJECT STAGE – 1", ""],
+                    "WED": ["", "IV CSE – C CD LAB", "IV CSE – C CD LAB", "LUNCH", "MOOCS - C", "IV CSE –A CNS LAB", "IV CSE –A CNS LAB"],
+                    "THU": ["", "IV CSE – A CD LAB & GS", "IV CSE – A CD LAB & GS", "LUNCH", "IV CSE – A PROJECT STAGE – 1", "IV CSE – A PROJECT STAGE – 1", ""],
+                    "FRI": ["", "IV CSE – B CD LAB", "IV CSE – B CD LAB", "LUNCH", "MOOCS - A", "MOOCS - B", ""],
+                    "SAT": ["", "", "", "LUNCH", "MOOCS – A & GS", "MOOCS - C", ""]
+                }
+            },
+            {
+                name: "Mrs.J. VIJAYASREE",
+                workload: "17 hours/week",
+                yearSem: "III Year B.Tech, I Semester",
+                section: "A & B",
+                timetable: {
+                    "MON": ["DevOps-B", "DevOps Lab-B", "DevOps Lab-B", "LUNCH", "", "", ""],
+                    "TUE": ["DevOps-B", "DevOps Lab-C", "DevOps Lab-C", "LUNCH", "DevOps-A", "", ""],
+                    "WED": ["DevOps-A", "", "", "LUNCH", "", "", ""],
+                    "THU": ["", "DevOps Lab-A", "DevOps Lab-A", "LUNCH", "DevOps-B", "", ""],
+                    "FRI": ["", "DevOps-A", "", "LUNCH", "", "OOPS through Java Lab-C", "OOPS through Java Lab-C"],
+                    "SAT": ["DevOps-A", "", "", "LUNCH", "DevOps-B", "", ""]
+                }
+            },
+            {
+                name: "Mrs.P. JANAKI",
+                workload: "17 hours/week",
+                yearSem: "I/II/III Year B.Tech, I Semester",
+                section: "A, B & C",
+                timetable: {
+                    "MON": ["", "DEVOPS", "", "PPS-B", "CODING(II A)", "CODING(II A)", ""],
+                    "TUE": ["PPS-B", "DEVOPS LAB(III C)", "DEVOPS LAB(III C)", "LUNCH", "DEVOPS", "", ""],
+                    "WED": ["DEVOPS", "POWER BI(II B)", "POWER BI(II B)", "LUNCH", "", "", ""],
+                    "THU": ["", "", "", "PPS-B", "POWER BI(II C)", "POWER BI(II C)", ""],
+                    "FRI": ["PPS-B", "", "", "LUNCH", "DEVOPS", "", ""],
+                    "SAT": ["", "", "", "PPS-B", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.V. JEEVAN BABU",
+                workload: "14 hours/week",
+                yearSem: "IV Year B.Tech, I Semester",
+                section: "A & B",
+                timetable: {
+                    "MON": ["", "CNS LAB-B", "CNS LAB-B", "LUNCH", "CNS A", "", ""],
+                    "TUE": ["", "CNS-B", "", "LUNCH", "", "CNS A", ""],
+                    "WED": ["", "CNS-B", "", "LUNCH", "", "CNS LAB-A", "CNS LAB-A"],
+                    "THU": ["CNS-B", "", "", "LUNCH", "", "III CSE-B FLUTTER LAB", "III CSE-B FLUTTER LAB"],
+                    "FRI": ["", "CNS A", "", "LUNCH", "", "", ""],
+                    "SAT": ["CNS A", "", "CNS-B", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.K. BIKSHA PATHI",
+                workload: "17 hours/week",
+                yearSem: "II/III Year B.Tech, I Semester",
+                section: "A, C",
+                timetable: {
+                    "MON": ["DS LAB", "DS LAB", "DS LAB", "LUNCH", "SL-A", "", ""],
+                    "TUE": ["", "SL-A", "", "LUNCH", "", "", "DS"],
+                    "WED": ["DS", "", "", "LUNCH", "SL-C", "", ""],
+                    "THU": ["", "SL-C", "", "LUNCH", "DS", "POWER BI", "POWER BI"],
+                    "FRI": ["SL-C", "", "SL-A", "LUNCH", "", "", ""],
+                    "SAT": ["DS", "SL-C", "", "LUNCH", "", "SL-A", ""]
+                }
+            },
+            {
+                name: "Mr.CH. KRISHNA PRASAD",
+                workload: "17 hours/week",
+                yearSem: "I/II Year B.Tech, I Semester",
+                section: "A & C",
+                timetable: {
+                    "MON": ["PPS-A", "", "DS-B", "LUNCH", "PPS-A LAB", "PPS-A LAB", ""],
+                    "TUE": ["DS-B LAB", "DS-B LAB", "DS-B LAB", "LUNCH", "", "", ""],
+                    "WED": ["PPS-A", "", "", "LUNCH", "DS-B", "", ""],
+                    "THU": ["", "", "DS-B", "LUNCH", "PPS-A", "", ""],
+                    "FRI": ["DS-B", "", "", "PPS-A", "", "CODING", "CODING"],
+                    "SAT": ["", "PPS-A", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mrs.M. ANUSHA",
+                workload: "3 hours/week",
+                yearSem: "I/IV Year B.Tech, I Semester",
+                section: "A",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "PPS LAB-A", "PPS LAB-A", ""],
+                    "TUE": ["", "", "", "LUNCH", "", "", ""],
+                    "WED": ["", "", "", "LUNCH", "", "", ""],
+                    "THU": ["", "", "", "LUNCH", "", "", ""],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Dr. M. MURUGESAN",
+                workload: "10 hours/week",
+                yearSem: "IV Year B.Tech, I Semester",
+                section: "A, C",
+                timetable: {
+                    "MON": ["", "BDA-CSE C", "BDA-CSE A", "LUNCH", "", "", ""],
+                    "TUE": ["BDA-CSE A", "CNS LAB-IV CSE C", "CNS LAB-IV CSE C", "LUNCH", "", "BDA-CSE C", ""],
+                    "WED": ["", "BDA-CSE A", "", "LUNCH", "", "", ""],
+                    "THU": ["", "", "", "LUNCH", "BDA-CSE C", "", ""],
+                    "FRI": ["BDA-CSE C", "", "BDA-CSE A", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.P. KISHORE",
+                workload: "16 hours/week",
+                yearSem: "II Year B.Tech, I Semester",
+                section: "A & C",
+                timetable: {
+                    "MON": ["II(A)", "", "", "LUNCH", "II(C)", "III(C) CN LAB", "III(C) CN LAB"],
+                    "TUE": ["II(C)", "", "II(A)", "LUNCH", "", "", ""],
+                    "WED": ["", "", "", "LUNCH", "II(A) OOPSTJ LAB", "II(A) OOPSTJ LAB", ""],
+                    "THU": ["", "", "II(A)", "LUNCH", "", "", ""],
+                    "FRI": ["", "", "II(C)", "LUNCH", "II(C) OOPSTJ LAB", "II(C) OOPSTJ LAB", ""],
+                    "SAT": ["II(A)", "", "II(C)", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mrs.G. PRASHANTHI",
+                workload: "17 hours/week",
+                yearSem: "B.Tech (CSE)",
+                section: "Not specified",
+                timetable: {
+                    "MON": ["DAA", "Devops Lab(2)", "Devops Lab(2)", "LUNCH", "", "CD", ""],
+                    "TUE": ["DAA", "", "", "LUNCH", "DS Lab(2)", "DS Lab(2)", ""],
+                    "WED": ["", "CD Lab", "CD Lab", "LUNCH", "", "DAA", ""],
+                    "THU": ["CD", "CD lab (2)", "CD lab (2)", "LUNCH", "DAA", "", ""],
+                    "FRI": ["", "", "CD", "LUNCH", "", "CD", ""],
+                    "SAT": ["", "", "CD", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mrs.M. SADALAXMI",
+                workload: "16 hours/week",
+                yearSem: "III/IV Year B.Tech, I Semester",
+                section: "A, B",
+                timetable: {
+                    "MON": ["DAA-IIICSE-A", "CD-IVCSE-A", "", "LUNCH", "", "", ""],
+                    "TUE": ["CD-IVCSE-B", "", "DAA-IIICSE-A", "LUNCH", "CD-IVCSE-A", "", ""],
+                    "WED": ["CD-IVCSE-A", "", "CD-IVCSE-B", "LUNCH", "DAA-IIICSE-A", "", ""],
+                    "THU": ["", "CD LAB-IVCSE-A", "CD LAB-IVCSE-A", "LUNCH", "CD-IVCSE-B", "", ""],
+                    "FRI": ["CD-IVCSE-A", "CD LAB-IVCSE-B", "CD LAB-IVCSE-B", "LUNCH", "DAA-IIICSE-A", "", ""],
+                    "SAT": ["", "CD-IVCSE-B", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr.N. SIVA KUMAR",
+                workload: "2 hours/week",
+                yearSem: "I Year B.Tech, I Semester",
+                section: "C",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "", "", ""],
+                    "TUE": ["", "", "", "LUNCH", "", "", ""],
+                    "WED": ["", "", "", "LUNCH", "", "", ""],
+                    "THU": ["", "", "", "LUNCH", "", "", "CSE-C"],
+                    "FRI": ["", "", "", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Mr. K. VEERANJANEYULU",
+                workload: "Not specified",
+                yearSem: "Not specified",
+                section: "Not specified",
+                timetable: {
+                    "MON": ["AI APP-B", "CNS LAB - IV/B", "CNS LAB - IV/B", "LUNCH", "OOPTJ LAB - II/B", "OOPTJ LAB - II/B", ""],
+                    "TUE": ["", "AI APP-A", "", "LUNCH", "AI APP-B", "CN LAB - III/A", "CN LAB - III/A"],
+                    "WED": ["AI APP-B", "", "", "LUNCH", "AI APP-A", "", ""],
+                    "THU": ["AI APP-A", "", "AI APP-B", "LUNCH", "", "", ""],
+                    "FRI": ["", "POWER BI - II/A", "POWER BI - II/A", "LUNCH", "", "", ""],
+                    "SAT": ["", "AI APP-A", "", "LUNCH", "", "", ""]
+                }
+            },
+            {
+                name: "Dr. Y.V.R NAGAPAWAN",
+                workload: "8 hours/week",
+                yearSem: "II Year B.Tech, I Semester",
+                section: "B, C",
+                timetable: {
+                    "MON": ["", "", "", "LUNCH", "OOPSTJ LAB(B)", "OOPSTJ LAB(B)", ""],
+                    "TUE": ["", "", "", "LUNCH", "OOPSTJ-B", "", ""],
+                    "WED": ["OOPSTJ-B", "", "", "LUNCH", "", "CODING-C", "CODING-C"],
+                    "THU": ["", "", "", "LUNCH", "", "OOPSTJ-B", ""],
+                    "FRI": ["", "", "OOPSTJ-B", "LUNCH", "", "", ""],
+                    "SAT": ["", "", "", "LUNCH", "", "", ""]
+                }
+            },
+            // --- Mrs. K.Anusha Data (New) ---
+            {
+                name: "Mrs. K.Anusha",
+                workload: "16 hours/week",
+                yearSem: "B.Tech (CSE), I Semester",
+                section: "Not specified",
+                timetable: {
+                    "MON": ["", "", "CS", "LUNCH", "IRS", "", ""],
+                    "TUE": ["", "", "", "LUNCH", "", "IRS", ""],
+                    "WED": ["CS", "SDC LAB(2)", "SDC LAB(2)", "LUNCH", "", "", ""],
+                    "THU": ["IRS", "", "", "LUNCH", "", "", "SDC LAB"],
+                    "FRI": ["", "POWER BI(2)", "POWER BI(2)", "LUNCH", "CS", "SDC LAB", ""],
+                    "SAT": ["", "CS", "IRS", "LUNCH", "", "", ""]
+                }
+            }
+        ];
+
+        // Time slots
+        const timeSlots = [
+            "9:30-10:30",
+            "10:40-11:40",
+            "11:40-12:40",
+            "12:40-1:20", // Lunch break
+            "1:20-2:15",
+            "2:20-3:15",
+            "3:15-4:10"
+        ];
+
+        // Days of the week
+        const days = ["MON", "TUE", "WED", "THU", "FRI", "SAT"];
+
+        // Initialize the dashboard
+        document.addEventListener('DOMContentLoaded', function() {
+            const facultyNamesContainer = document.getElementById('facultyNames');
+            const selectedFacultyElement = document.getElementById('selectedFaculty');
+            const workloadValueElement = document.getElementById('workloadValue');
+            const yearSemValueElement = document.getElementById('yearSemValue');
+            const sectionValueElement = document.getElementById('sectionValue');
+            const currentDayElement = document.getElementById('currentDay');
+            const currentTimeElement = document.getElementById('currentTime');
+            const timetableContentElement = document.getElementById('timetableContent');
+
+            // Update current time
+            function updateTime() {
+                const now = new Date();
+                const options = {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit',
+                    second: '2-digit'
+                };
+                currentTimeElement.textContent = now.toLocaleString('en-US', options);
+                currentDayElement.textContent = now.toLocaleDateString('en-US', { weekday: 'long' });
+            }
+
+            // Initial call and set interval for time update
+            updateTime();
+            setInterval(updateTime, 1000);
+
+            // Function to categorize the class type
+            function getClassType(className) {
+                if (className.toUpperCase().includes("LUNCH")) {
+                    return "lunch-cell";
+                } else if (className.toUpperCase().includes("LAB") || className.toUpperCase().includes("PROJECT") || className.toUpperCase().includes("CODING") || className.toUpperCase().includes("GS") || className.includes("(2)")) {
+                    // Added "(2)" for 2-hour labs that appear in one cell
+                    return "lab-cell";
+                } else if (className === "" || className === " ") {
+                    return "empty-cell";
+                } else {
+                    return "class-cell";
+                }
+            }
+
+            // Function to render the timetable
+            function renderTimetable(faculty) {
+                // Update details
+                selectedFacultyElement.textContent = faculty.name;
+                workloadValueElement.textContent = faculty.workload;
+                yearSemValueElement.textContent = faculty.yearSem;
+                sectionValueElement.textContent = faculty.section;
+
+                // Create the table structure
+                let tableHTML = '<table>';
+                // Table Header (Time Slots)
+                tableHTML += '<thead><tr><th>Day/Time</th>';
+                timeSlots.forEach((time, index) => {
+                    if (time.includes("12:40-1:20")) {
+                        tableHTML += '<th class="time-slot" colspan="1">' + time + ' (LUNCH)</th>';
+                    } else {
+                        tableHTML += '<th class="time-slot">' + time + '</th>';
+                    }
+                });
+                tableHTML += '</tr></thead><tbody>';
+
+                // Table Body (Timetable Rows)
+                days.forEach(day => {
+                    const dailySchedule = faculty.timetable[day] || ["", "", "", "LUNCH", "", "", ""];
+                    tableHTML += '<tr><td style="font-weight: 700; color: #333;">' + day + '</td>';
+
+                    dailySchedule.forEach((period, index) => {
+                        const cellClass = getClassType(period);
+                        // Merge the 10:40 and 11:40 slots if they are the same lab/class for Mr. V. KASINADHAM
+                        // We'll look for the pattern "X LAB" followed by "X LAB" (or similar)
+                        if (index === 1 && period !== "LUNCH" && period === dailySchedule[index + 1]) {
+                            // This is the start of a merged cell (2 hours)
+                            // We need a more robust check for 2-hour labs: let's assume if it's identical to the next one, it's a 2-hour slot.
+                            const periodText = period.replace(/\(2\)/g, '').trim(); // Remove (2) for cleaner display but keep class.
+                            tableHTML += '<td class="' + cellClass + '" colspan="2">' + periodText + '</td>';
+                        } else if (index === 2 && period !== "LUNCH" && period === dailySchedule[index - 1]) {
+                            // This is the second hour of a merged cell, skip it.
+                            return;
+                        } else {
+                            // Normal cell, or the start of a sequence that's not a merge of the next one.
+                            tableHTML += '<td class="' + cellClass + '">' + period + '</td>';
+                        }
+                    });
+
+                    tableHTML += '</tr>';
+                });
+
+                tableHTML += '</tbody></table>';
+                timetableContentElement.innerHTML = tableHTML;
+
+                // Simple check for 2-hour periods that use "(2)" notation but aren't next to each other
+                // This is a complex dynamic rendering problem that often requires more detailed data structure.
+                // For now, the primary merging logic is for consecutive identical classes in time slot 1 and 2.
+            }
+
+            // Function to handle faculty item click
+            function handleFacultyClick(faculty) {
+                // Remove 'active' class from all items
+                document.querySelectorAll('.faculty-item').forEach(item => {
+                    item.classList.remove('active');
+                });
+                // Add 'active' class to the clicked item
+                event.currentTarget.classList.add('active');
+                renderTimetable(faculty);
+            }
+
+            // Populate the faculty list
+            facultyData.sort((a, b) => a.name.localeCompare(b.name));
+            facultyData.forEach(faculty => {
+                const facultyItem = document.createElement('div');
+                facultyItem.classList.add('faculty-item');
+                facultyItem.innerHTML = `
+                    <span>${faculty.name}</span>
+                    <span class="workload-badge">${faculty.workload.split(' ')[0]}Hrs</span>
+                `;
+                facultyItem.addEventListener('click', () => handleFacultyClick(faculty));
+                facultyNamesContainer.appendChild(facultyItem);
+            });
+
+            // Automatically select the first faculty member on load
+            if (facultyData.length > 0) {
+                const firstFacultyItem = facultyNamesContainer.querySelector('.faculty-item');
+                if (firstFacultyItem) {
+                    firstFacultyItem.classList.add('active');
+                    renderTimetable(facultyData[0]);
+                }
+            }
+        });
+    </script>
+</body>
+</html>
